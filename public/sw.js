@@ -3,7 +3,9 @@ const CACHE_NAME = "multiplication-memory-v1";
 async function cacheAppShell() {
   const indexResponse = await fetch("./index.html", { cache: "reload" });
   const index = await indexResponse.text();
-  const assetUrls = [...index.matchAll(/(?:src|href)="([^"#]+)"/g)].map((match) => match[1]);
+  const assetUrls = [...index.matchAll(/(?:src|href)="([^"#]+)"/g)]
+    .map((match) => match[1])
+    .filter((url) => url.startsWith("./"));
   const appShell = [...new Set(["./", "./index.html", ...assetUrls])];
   const cache = await caches.open(CACHE_NAME);
   await cache.addAll(appShell);
