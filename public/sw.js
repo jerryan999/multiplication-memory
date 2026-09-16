@@ -1,4 +1,4 @@
-const CACHE_NAME = "multiplication-memory-v1";
+const CACHE_NAME = "multiplication-memory-v2";
 
 async function cacheAppShell() {
   const indexResponse = await fetch("./index.html", { cache: "reload" });

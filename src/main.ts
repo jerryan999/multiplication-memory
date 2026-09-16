@@ -9,9 +9,20 @@ import { sfx } from "./ui/sound";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((error: unknown) => {
-      console.warn("PWA offline cache registration failed", error);
+    let refreshedForUpdate = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshedForUpdate) {
+        refreshedForUpdate = true;
+        window.location.reload();
+      }
     });
+
+    navigator.serviceWorker
+      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .then((registration) => registration.update())
+      .catch((error: unknown) => {
+        console.warn("PWA offline cache registration failed", error);
+      });
   });
 }
 
