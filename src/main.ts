@@ -31,8 +31,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const appRoot = document.getElementById("app");
   if (appRoot) new App(appRoot).init();
 
-  // 首次交互时解锁音频（满足浏览器自动播放策略）
-  const unlock = () => sfx.unlock();
-  document.addEventListener("pointerdown", unlock, { once: true });
-  document.addEventListener("keydown", unlock, { once: true });
+  // 在捕获阶段解锁，避免 iOS Safari 在点击处理完成后拒绝播放音效。
+  const unlock = () => void sfx.unlock();
+  document.addEventListener("pointerdown", unlock, { capture: true, once: true });
+  document.addEventListener("keydown", unlock, { capture: true, once: true });
 });

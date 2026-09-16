@@ -22,6 +22,8 @@ export class App {
   }
 
   private onClick = (event: MouseEvent) => {
+    // 点击本身是 iOS 允许恢复 Web Audio 的用户手势。
+    void sfx.unlock();
     const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action]");
     if (!target) return;
     const action = target.dataset.action;
