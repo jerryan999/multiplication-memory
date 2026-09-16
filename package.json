@@ -1,0 +1,19 @@
+{
+  "name": "multiplication-memory",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "记忆乘法口诀表的小游戏：Phaser + TypeScript + Vite",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

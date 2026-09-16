@@ -1,0 +1,19 @@
+{
+  "name": "乘法口诀小勇士",
+  "short_name": "乘法口诀",
+  "description": "帮助记忆九九乘法口诀表的小游戏。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
