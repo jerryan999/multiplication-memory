@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { markBooted } from "../gameManager";
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -6,6 +7,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.start("MenuScene");
+    this.scene.start(markBooted());
   }
 }

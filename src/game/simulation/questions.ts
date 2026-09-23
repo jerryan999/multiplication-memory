@@ -1,12 +1,5 @@
-import type { LevelConfig } from "../content/levels";
-
-export interface Question {
-  a: number;
-  b: number;
-  answer: number;
-  key: string;
-  text: string;
-}
+import type { Fact } from "../content/facts";
+import type { Stage } from "./mastery";
 
 export type RNG = () => number;
 
@@ -30,69 +23,113 @@ export function shuffle<T>(arr: readonly T[], rng: RNG): T[] {
   return out;
 }
 
-export function questionKey(a: number, b: number): string {
-  return `${a}x${b}`;
+/**
+ * 题型，难度递增：
+ * - choice  四选一（初学，先认识）
+ * - input   看算式直接填答案（要求回忆出来）
+ * - missing 缺项填空，如 7 × ? = 56（要求真正记住）
+ */
+export type QuestionKind = "choice" | "input" | "missing";
+
+export interface Question {
+  fact: Fact;
+  kind: QuestionKind;
+  /** 等号左侧两个位置，空字符串表示待填 */
+  left: string;
+  right: string;
+  /** 等号右侧，空字符串表示待填 */
+  result: string;
+  /** 需要作答的数字 */
+  expected: number;
+  options: number[];
+  hint: string;
+  /** 需要填的是积还是一个因数 */
+  target: "product" | "factor";
 }
 
-export function makeQuestion(a: number, b: number): Question {
-  return { a, b, answer: a * b, key: questionKey(a, b), text: `${a} × ${b}` };
-}
+/** 干扰项取同一行、同一列的其他积——这些正是孩子真正会混的邻近口诀 */
+function buildOptions(fact: Fact, rng: RNG): number[] {
+  const pool = new Set<number>();
+  for (let k = 1; k <= 9; k++) {
+    pool.add(fact.a * k);
+    pool.add(fact.b * k);
+  }
+  pool.delete(fact.product);
 
-const DIGITS = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"] as const;
+  const candidates = shuffle([...pool].filter((v) => v >= 1 && v <= 81), rng);
+  const picked: number[] = [];
 
-export function toChineseNumber(n: number): string {
-  if (n < 10) return DIGITS[n];
-  if (n === 10) return "十";
-  if (n < 20) return `十${DIGITS[n % 10]}`;
-  const tens = Math.floor(n / 10);
-  const ones = n % 10;
-  return ones === 0 ? `${DIGITS[tens]}十` : `${DIGITS[tens]}十${DIGITS[ones]}`;
-}
-
-/** 生成口诀，如 3×7 -> "三七二十一"，2×3 -> "二三得六" */
-export function toKouJue(a: number, b: number): string {
-  const [small, big] = a <= b ? [a, b] : [b, a];
-  const product = small * big;
-  const head = `${DIGITS[small]}${DIGITS[big]}`;
-  return product < 10 ? `${head}得${DIGITS[product]}` : `${head}${toChineseNumber(product)}`;
-}
-
-/** 生成一道题的 3 个干扰项 + 正确答案（乱序） */
-export function generateOptions(q: Question, rng: RNG): number[] {
-  const candidates = new Set<number>();
-
-  // 优先用邻近乘法算式的积（最贴近真实错误的干扰项）
-  for (const da of [0, 1, -1]) {
-    for (const db of [0, 1, -1]) {
-      const a = Math.max(1, Math.min(9, q.a + da));
-      const b = Math.max(1, Math.min(9, q.b + db));
-      const v = a * b;
-      if (v !== q.answer && v >= 1 && v <= 81) candidates.add(v);
-    }
+  // 先挑一个相邻的积（最容易混），再随机补两个
+  const neighbour = candidates.find((v) => Math.abs(v - fact.product) <= 9) ?? candidates[0];
+  if (neighbour !== undefined) picked.push(neighbour);
+  for (const v of candidates) {
+    if (picked.length >= 3) break;
+    if (!picked.includes(v)) picked.push(v);
   }
 
-  // 不足时用 ± 偏移补足
-  let offset = 1;
-  while (candidates.size < 3 && offset <= 9) {
-    for (const v of [q.answer + offset, q.answer - offset]) {
-      if (v !== q.answer && v >= 1 && v <= 81 && !candidates.has(v)) candidates.add(v);
-      if (candidates.size >= 3) break;
-    }
-    offset++;
-  }
-
-  const options = shuffle([...candidates], rng).slice(0, 3);
-  options.push(q.answer);
-  return shuffle(options, rng);
+  return shuffle([...picked, fact.product], rng);
 }
 
-/** 按关卡生成一轮题目（乱序、去重） */
-export function generateRound(level: LevelConfig, count: number, rng: RNG): Question[] {
-  const pairs: Array<[number, number]> = [];
-  for (const row of level.rows) {
-    for (let b = 1; b <= 9; b++) pairs.push([row, b]);
+function kindForStage(stage: Stage, rng: RNG): QuestionKind {
+  if (stage <= 1) return "choice";
+  if (stage === 2) return "input";
+  return rng() < 0.35 ? "missing" : "input";
+}
+
+/** 按掌握阶段生成一道题：越熟练，越要求自己背出来 */
+export function makeQuestion(fact: Fact, stage: Stage, rng: RNG): Question {
+  const kind = kindForStage(stage, rng);
+  /*
+   * 因数的前后顺序也随机：3×7 和 7×3 都要认得，
+   * 否则孩子可能只记住"小的在前"这一个固定写法。
+   */
+  const flipped = rng() < 0.5;
+  const first = flipped ? fact.b : fact.a;
+  const second = flipped ? fact.a : fact.b;
+
+  if (kind === "choice") {
+    return {
+      fact,
+      kind,
+      left: String(first),
+      right: String(second),
+      result: "",
+      expected: fact.product,
+      options: buildOptions(fact, rng),
+      hint: "选一个正确答案",
+      target: "product",
+    };
   }
-  return shuffle(pairs, rng)
-    .slice(0, count)
-    .map(([a, b]) => makeQuestion(a, b));
+
+  if (kind === "input") {
+    return {
+      fact,
+      kind,
+      left: String(first),
+      right: String(second),
+      result: "",
+      expected: fact.product,
+      options: [],
+      hint: "不看选项，自己算出答案",
+      target: "product",
+    };
+  }
+
+  // 缺项填空：藏起一个因数，同样保留上面随机好的前后顺序
+  const hideRight = rng() < 0.5;
+  return {
+    fact,
+    kind,
+    left: hideRight ? String(first) : "?",
+    right: hideRight ? "?" : String(second),
+    result: String(fact.product),
+    expected: hideRight ? second : first,
+    options: [],
+    hint: "想一想：口诀里的另一个数是多少？",
+    target: "factor",
+  };
+}
+
+export function isCorrect(question: Question, value: number): boolean {
+  return value === question.expected;
 }

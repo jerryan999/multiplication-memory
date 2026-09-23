@@ -80,6 +80,10 @@ class SoundFX {
     this.play([{ freq: 520, at: 0, dur: 0.08, type: "triangle", vol: 0.14 }]);
   }
 
+  keypad() {
+    this.play([{ freq: 740, at: 0, dur: 0.05, type: "triangle", vol: 0.09 }]);
+  }
+
   correct() {
     this.play([
       { freq: 660, at: 0, dur: 0.12 },
