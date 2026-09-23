@@ -102,6 +102,5 @@ export function renderQuiz(view: QuizView): string {
 
       ${question.kind === "choice" ? choiceArea(question) : typeArea(typed)}
       <div class="feedback-slot" aria-live="polite"></div>
-      <p class="quiz-foot">本条口诀：${question.fact.koujue}</p>
     </section>`;
 }

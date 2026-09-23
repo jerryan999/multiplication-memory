@@ -807,14 +807,6 @@ button:focus-visible {
   font-size: 13px;
 }
 
-.quiz-foot {
-  margin-top: 14px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 1px;
-}
-
 /* ------------------------------------------------------ 结算 */
 
 .result-title {
