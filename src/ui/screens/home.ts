@@ -7,7 +7,7 @@ import {
   type MasteryStats,
   type Stage,
 } from "../../game/simulation/mastery";
-import { DAILY_GOAL, type DailyState } from "../../game/simulation/daily";
+import type { DailyState } from "../../game/simulation/daily";
 
 const LEGEND_STAGES: Stage[] = [1, 2, 3, 4];
 
@@ -32,7 +32,9 @@ export function renderHome(
   unresolvedCount: number,
 ): string {
   const pct = Math.round((stats.mastered / TOTAL_FACTS) * 100);
-  const todayPct = Math.min(100, Math.round((daily.answered / DAILY_GOAL) * 100));
+  // 今日目标跟随一轮的题数，不再写死
+  const goal = roundSize;
+  const todayPct = goal === 0 ? 0 : Math.min(100, Math.round((daily.answered / goal) * 100));
 
   // 每一行只作为进度展示，不可点击
   const rows = Array.from({ length: 9 }, (_, i) => i + 1)
@@ -86,7 +88,7 @@ export function renderHome(
       </button>
 
       <div class="today-strip">
-        <span>今天已练 <b>${daily.answered}</b> / ${DAILY_GOAL} 题</span>
+        <span>今天已练 <b>${daily.answered}</b> / ${goal} 题</span>
         <span class="today-bar"><i style="width:${todayPct}%"></i></span>
         ${daily.streakDays > 1 ? `<span class="streak">🔥 连续 ${daily.streakDays} 天</span>` : ""}
       </div>

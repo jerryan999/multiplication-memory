@@ -1,6 +1,17 @@
+import { getSettings } from "./settings";
+
 const STORAGE_KEY = "jiujiu-daily:v2";
 
-export const DAILY_GOAL = 12;
+/**
+ * 每日目标题数 = 一轮的题数。
+ *
+ * 早先这里写死 12，与设置里的题数（默认 20）不一致，
+ * 主页会显示"今天已练 0 / 12 题"而实际一轮是 20 题。
+ * 现在直接跟随设置，改题数时今日目标同步变化。
+ */
+export function dailyGoal(): number {
+  return getSettings().questionsPerRound;
+}
 
 export interface DailyState {
   date: string;
@@ -81,5 +92,5 @@ export function recordSession(answered: number, mastered: number) {
 }
 
 export function dailyGoalReached(): boolean {
-  return getDaily().answered >= DAILY_GOAL;
+  return getDaily().answered >= dailyGoal();
 }
